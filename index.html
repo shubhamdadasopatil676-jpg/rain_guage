@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Rain Gauge — Station Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<div class="app">
+
+  <!-- ============ LEFT: STATION PANEL ============ -->
+  <aside class="station-panel">
+    <div class="station-top">
+      <div class="station-id">
+        <span class="eyebrow">STATION</span>
+        <h1 id="stationName">Backyard Rain Gauge</h1>
+      </div>
+      <div class="station-meta">
+        <div class="meta-row">
+          <svg class="i-pin" viewBox="0 0 24 24"><path d="M12 2C8.1 2 5 5.1 5 9c0 5.2 7 13 7 13s7-7.8 7-13c0-3.9-3.1-7-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>
+          <span id="stationLocation">Not set</span>
+        </div>
+        <div class="meta-row">
+          <svg class="i-clock" viewBox="0 0 24 24"><path d="M12 2a10 10 0 1 0 10 10A10 10 0 0 0 12 2zm.5 5v5.25l4 2.38-.75 1.23L11 13V7z"/></svg>
+          <span>Updated <span id="lastUpdated">—</span></span>
+        </div>
+      </div>
+    </div>
+
+    <div class="hero-metric">
+      <span class="hero-label">Rainfall today</span>
+      <div class="hero-number">
+        <span id="rainfallValue">0.0</span><span class="hero-unit">mm</span>
+      </div>
+      <div class="status-pill" id="statusPill">
+        <span class="status-dot"></span>
+        <span id="statusText">Awaiting data</span>
+      </div>
+    </div>
+
+    <!-- Signature element: animated tipping-bucket indicator -->
+    <div class="bucket-scene">
+      <svg id="bucketSvg" viewBox="0 0 220 200" class="bucket-illustration">
+        <!-- funnel -->
+        <path d="M40 20 L180 20 L120 70 L100 70 Z" fill="var(--panel-line)" opacity="0.55"/>
+        <!-- drop feed -->
+        <circle id="feedDrop" cx="110" cy="78" r="4" fill="var(--accent-cyan)" opacity="0"/>
+        <!-- pivot post -->
+        <rect x="106" y="86" width="8" height="26" fill="var(--panel-line)" opacity="0.55"/>
+        <!-- tipping bucket group, rotates around pivot at (110,112) -->
+        <g id="bucketGroup" transform-origin="110px 112px">
+          <path d="M78 112 L142 112 L134 150 L86 150 Z" fill="none" stroke="var(--accent-cyan)" stroke-width="3" stroke-linejoin="round"/>
+          <path id="bucketWater" d="M86 150 L134 150 L134 150 L86 150 Z" fill="var(--accent-cyan)" opacity="0.55"/>
+        </g>
+        <!-- base -->
+        <rect x="70" y="170" width="80" height="8" rx="4" fill="var(--panel-line)" opacity="0.55"/>
+        <text x="110" y="196" text-anchor="middle" class="bucket-caption">tipping-bucket sensor</text>
+      </svg>
+      <div class="tip-counter">
+        <span class="tip-counter-value" id="miniTipCount">0</span>
+        <span class="tip-counter-label">tips logged today</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- ============ RIGHT: MAIN DASHBOARD ============ -->
+  <main class="main-panel">
+
+    <header class="main-header">
+      <div>
+        <h2>Welcome back — here's today's readout</h2>
+        <p class="subtext">Live tip data from your ESP8266 + A3144 rain gauge</p>
+      </div>
+      <div class="source-badge" id="sourceBadge">
+        <span class="source-dot"></span>
+        Live data
+      </div>
+    </header>
+
+    <section class="card chart-card">
+      <div class="chart-card-head">
+        <h3>Tips per hour</h3>
+        <span class="chart-range">Last 12 hours</span>
+      </div>
+      <canvas id="tipsChart" height="220"></canvas>
+    </section>
+
+    <section class="stat-grid">
+
+      <div class="stat-card">
+        <div class="stat-card-head">
+          <span>Total tips</span>
+          <span class="stat-icon">💧</span>
+        </div>
+        <div class="stat-value"><span id="statTotalTips">0</span></div>
+        <div class="bar-track"><div class="bar-fill" id="barTotalTips"></div></div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-card-head">
+          <span>Total volume</span>
+          <span class="stat-icon">🪣</span>
+        </div>
+        <div class="stat-value"><span id="statVolume">0</span><span class="stat-unit">mL</span></div>
+        <div class="bar-track"><div class="bar-fill" id="barVolume"></div></div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-card-head">
+          <span>Rainfall</span>
+          <span class="stat-icon">🌧️</span>
+        </div>
+        <div class="stat-value"><span id="statRainfall">0.0</span><span class="stat-unit">mm</span></div>
+        <div class="bar-track"><div class="bar-fill" id="barRainfall"></div></div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-card-head">
+          <span>Rain rate</span>
+          <span class="stat-icon">📈</span>
+        </div>
+        <div class="stat-value"><span id="statRate">0.0</span><span class="stat-unit">mm/hr</span></div>
+        <div class="bar-track"><div class="bar-fill" id="barRate"></div></div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-card-head">
+          <span>Last tip</span>
+          <span class="stat-icon">⏱️</span>
+        </div>
+        <div class="stat-value stat-value-text" id="statLastTip">—</div>
+        <div class="bar-track"><div class="bar-fill" id="barLastTip"></div></div>
+      </div>
+
+      <div class="stat-card">
+        <div class="stat-card-head">
+          <span>Tip interval</span>
+          <span class="stat-icon">〰️</span>
+        </div>
+        <div class="stat-value"><span id="statInterval">0</span><span class="stat-unit">sec avg</span></div>
+        <div class="bar-track"><div class="bar-fill" id="barInterval"></div></div>
+      </div>
+
+    </section>
+
+    <footer class="config-note">
+      <span>Calibration: <code id="calibNote">7.0 mL / tip</code></span>
+      <span class="dot-sep">·</span>
+      <span>Funnel area: <code id="funnelNote">78.5 cm²</code></span>
+      <span class="dot-sep">·</span>
+      <span>Served live from ESP8266 via <code>GET /data</code></span>
+    </footer>
+
+  </main>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
